@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/20 16:39:02 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/07 13:13:01 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/09 15:42:33 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,13 @@ int accept_client(int server_socket)
     client_socket = accept(server_socket, (struct sockaddr *)&connection_addr, &addr_len);
     return (client_socket);
 }
-
+// void buffer_parse(char *request)
+// {
+//     std::cout << request << std::endl;
+// }
 int main()
 {
+    char storage_buff[4096];
     std::vector<struct pollfd> fds;
     int server_socket = set_server_socket();
     struct pollfd new_fd;
@@ -60,61 +64,41 @@ int main()
     {
         if ((poll(&fds[0], fds.size(), -1)) <= 0)
             err_p("poll");
-        for (size_t i = 0; i < fds.size(); i++) {
-            
-            if (fds[i].revents & POLLIN) {
-
-                if (fds[i].fd == server_socket) {
-                    
+        for (size_t i = 0; i < fds.size(); i++) 
+        {
+            if (fds[i].revents & POLLIN) 
+            {
+                if (fds[i].fd == server_socket) 
+                {
                     int newfd;
                     newfd = accept_client(server_socket);
-                    if (newfd < 0) {
+                    if (newfd < 0) 
                         perror("accept");
-                    } else {
-                        std::cout << "hey\n";
+                    else
+                    {
                         new_fd.fd = newfd;
                         new_fd.events = POLLIN | POLLOUT;
                         fds.push_back(new_fd);
                     }
-                } else {
-                    char storage_buff[4096];
+                }
+                else 
+                {
                     int bytes_read;
                     bytes_read = recv(fds[i].fd, storage_buff, 4096, 0);
-                    int sender_fd = fds[i].fd;
-                    if (bytes_read <= 0)
+                    storage_buff[bytes_read] = '\0';
+                    std::cout << storage_buff;
+                    // buffer_parse(storage_buff);
+                    if (bytes_read <= 0 || !strncmp(storage_buff, "QUIT", strlen(storage_buff) - 1))
                     {
-                        if (bytes_read == 0)
-                            std::cout << "Client [" << fds[i].fd << "] End Connection" << std::endl;
-                        else
-                            perror("recv");
+                        std::cout << "Client [" << fds[i].fd << "] End Connection" << std::endl;
                         close(fds[i].fd);
                         std::vector<struct pollfd>::iterator it = fds.begin();
-                        for (int j; j < i; j++)
-                        {
-                            it++;
-                        }
-                        std::cout << it << "hey\n";
                         std::advance(it, i);
                         fds.erase(it);
                     }
-                    else
-                    {
-                        for(size_t j = 0; j < fds.size(); j++)
-                        {
-                            int dest_fd = fds[j].fd;
-                            if (dest_fd != server_socket && dest_fd != sender_fd)
-                            {
-                                int check = send(dest_fd, storage_buff, bytes_read, 0);
-                                if (check == -1)
-                                {
-                                    perror("send");
-                                }
-                            }
-                        }
-                    }
-                } 
+                    
+                }
             }
         }
     }
-    return 0;
 }
