@@ -10,7 +10,7 @@ OBJ_S = ${SRCS_S:.cpp=.o}
 
 all : $(SERVER)
 
-%.o : %.cpp
+%.o : %.cpp Server.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 

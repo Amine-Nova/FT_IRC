@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/25 16:13:34 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/07 12:40:32 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/10 18:31:10 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,124 +21,69 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <algorithm>
+#include <sstream>
 #define CONNECTION_PORT 3500
 
 class Client
 {
+    private:
+        std::string Pass;
+        std::string Nick;
+        std::string User;
     public:
         Client();
+        Client(char *request);
+        void user_parse(std::string user);
+        std::string get_user();
+        std::string get_nick();
+        std::string get_pass();
         ~Client();
 };
 
 Client::Client()
 {
 }
-
+Client::Client(char *request)
+{
+    std::string Req = request;
+    std::string user, pass , nick, all;
+    Client Ret;
+    std::stringstream iss(Req);
+    while (std::getline(iss, all, '\n'))
+    {
+        if (!all.compare(0, 4, "PASS"))
+            this->Pass = all.substr(5, all.length());
+        else if (!all.compare(0, 4, "NICK"))
+            this->Nick = all.substr(5, all.length());
+        else if (!all.compare(0, 4, "USER"))
+            user_parse(all);
+    }
+}
+void Client::user_parse(std::string user)
+{
+    std::string ret, garbage;
+    std::stringstream ss(user);
+    int i = 0;
+    while (ss >> garbage)
+    {
+        if(i == 3)
+            ret = garbage;
+        i++;   
+    }
+    this->User = ret;
+}
+std::string Client::get_user()
+{
+    return(this->User);
+}
+std::string Client::get_nick()
+{
+    return(this->Nick);
+}
+std::string Client::get_pass()
+{
+    return(this->Pass);
+}
 Client::~Client()
 {
 }
-
-
-/*void err_p(const char *str)
-{
-    perror(str);
-    exit(1);
-}
-
-int set_server_socket()
-{
-    int server_socket, value = 1;
-    struct sockaddr_in server_addr;
-    
-    if ((server_socket = socket(PF_INET, SOCK_STREAM, 0)) < 0)
-        err_p("Socket creation failed");
-    if ((setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value))) < 0)
-        err_p("Couldn't set options");
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(CONNECTION_PORT);
-    server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    memset(server_addr.sin_zero, 0, 8);
-    if ((bind(server_socket, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))) < 0 \
-        || (listen(server_socket, 10)) < 0)
-        err_p("Couldn't listen for connections");
-    return (server_socket);
-}
-
-int accept_client(int server_socket)
-{
-    int client_socket;
-    socklen_t addr_len;
-    struct sockaddr_in connection_addr;
-    addr_len = sizeof(connection_addr);
-    if ((client_socket = accept(server_socket, (struct sockaddr *)&connection_addr, &addr_len)) < 0)
-        err_p("Couldn't establish connection with client");
-    return (client_socket);
-}
-
-void receive_request(int _socket)
-{
-    char storage_buff[4096];
-    int bytes_read;
-    int msize = 0;
-    while((bytes_read = recv(_socket, storage_buff, 4096, 0)))
-    {
-        storage_buff[bytes_read] = '\0';
-        msize += bytes_read;
-        if (msize > 4095 || storage_buff[msize - 1] == '\n')
-            break ;
-    }
-    if (bytes_read == 0)
-        std::cout << "Connection Closed" << std::endl;
-    else if(bytes_read == 0)
-    {
-        perror("err");
-        exit(1);
-    }
-    std::cout << "Message from client [" << _socket << "] : " << storage_buff << std::endl;
-}
-
-int main()
-{
-    std::vector<Client> Client;
-    int client_socket;
-    char message[7]="Hello\n";
-    int server_socket = set_server_socket();
-    fd_set read_fds, readfds_clone, write_fds, writefds_clone;
-    int socket_num = server_socket;
-    FD_ZERO(&read_fds);
-    FD_ZERO(&write_fds);
-    FD_SET(server_socket, &read_fds);
-    while(1)
-    {
-        // timeval timeout;
-        // timeout.tv_sec = 1;
-        // timeout.tv_usec = 0;
-        readfds_clone = read_fds;
-        writefds_clone = write_fds;
-        if (select(socket_num + 1, &readfds_clone, &writefds_clone, NULL, NULL) < 0)
-            err_p("select");
-        for(int i = 3; i <= socket_num; i++)
-        {
-            if (i == server_socket && FD_ISSET(i, &readfds_clone))
-            {
-                client_socket = accept_client(server_socket);
-                FD_SET(client_socket, &read_fds);
-                if (client_socket > socket_num)
-                    socket_num = client_socket;
-            }
-            else if (FD_ISSET(i, &readfds_clone))
-            {
-                receive_request(i);
-                FD_SET(i, &write_fds);
-            }
-            else if (FD_ISSET(i, &writefds_clone))
-            {
-                send(i, message, strlen(message), 0);
-                FD_CLR(i, &write_fds);
-            }
-        }
-    }
-    close(client_socket);
-    close(server_socket);
-}
-*/

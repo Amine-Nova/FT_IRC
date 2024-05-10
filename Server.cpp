@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/20 16:39:02 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/09 15:42:33 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/10 18:25:32 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ int set_server_socket()
         err_p("Couldn't set options");
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(CONNECTION_PORT);
-    server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     memset(server_addr.sin_zero, 0, 8);
     if ((bind(server_socket, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))) < 0 \
         || (listen(server_socket, 10)) < 0)
@@ -47,14 +47,16 @@ int accept_client(int server_socket)
     client_socket = accept(server_socket, (struct sockaddr *)&connection_addr, &addr_len);
     return (client_socket);
 }
-// void buffer_parse(char *request)
-// {
-//     std::cout << request << std::endl;
-// }
+// CAP LS
+
+// PASS 123
+// NICK abenmous
+// USER amine amine localhost :realname
 int main()
 {
     char storage_buff[4096];
     std::vector<struct pollfd> fds;
+    std::vector<Client> Client_Vec;
     int server_socket = set_server_socket();
     struct pollfd new_fd;
     new_fd.fd = server_socket;
@@ -86,8 +88,12 @@ int main()
                     int bytes_read;
                     bytes_read = recv(fds[i].fd, storage_buff, 4096, 0);
                     storage_buff[bytes_read] = '\0';
-                    std::cout << storage_buff;
-                    // buffer_parse(storage_buff);
+                    Client Clone(storage_buff);
+                    Client_Vec.push_back(Clone);
+                    std::vector<Client>::iterator iter = Client_Vec.begin();
+                    std::cout << "nick : " << iter->get_nick() << std::endl;
+                    std::cout << "pass : " << iter->get_pass() << std::endl;
+                    std::cout << "user : " << iter->get_user() << std::endl;
                     if (bytes_read <= 0 || !strncmp(storage_buff, "QUIT", strlen(storage_buff) - 1))
                     {
                         std::cout << "Client [" << fds[i].fd << "] End Connection" << std::endl;
@@ -96,7 +102,6 @@ int main()
                         std::advance(it, i);
                         fds.erase(it);
                     }
-                    
                 }
             }
         }
