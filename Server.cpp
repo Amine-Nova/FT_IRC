@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/20 16:39:02 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/10 18:25:32 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/11 11:33:40 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,21 +47,39 @@ int accept_client(int server_socket)
     client_socket = accept(server_socket, (struct sockaddr *)&connection_addr, &addr_len);
     return (client_socket);
 }
-// CAP LS
-
-// PASS 123
-// NICK abenmous
-// USER amine amine localhost :realname
-int main()
+std::string recv_request(int _socket)
 {
     char storage_buff[4096];
+    int bytes_read;
+    bytes_read = recv(_socket, storage_buff, 4096, 0);
+    storage_buff[bytes_read] = '\0';
+    std::string ret = storage_buff;
+    return (ret);
+}
+void push_fds(int _socket, size_t flags, std::vector<struct pollfd> &fds)
+{
+    struct pollfd new_fd;
+    new_fd.fd = _socket;
+    new_fd.events = flags;
+    fds.push_back(new_fd);
+}
+
+void pull_fds(int i, std::vector<struct pollfd> &fds)
+{
+    std::cout << "Client [" << fds[i].fd << "] End Connection" << std::endl;
+    close(fds[i].fd);
+    std::vector<struct pollfd>::iterator it = fds.begin();
+    std::advance(it, i);
+    fds.erase(it);
+}
+
+int main()
+{
     std::vector<struct pollfd> fds;
     std::vector<Client> Client_Vec;
+    std::string buff;
     int server_socket = set_server_socket();
-    struct pollfd new_fd;
-    new_fd.fd = server_socket;
-    new_fd.events = POLLIN;
-    fds.push_back(new_fd);
+    push_fds(server_socket, POLLIN, fds);
     while(1)
     {
         if ((poll(&fds[0], fds.size(), -1)) <= 0)
@@ -77,31 +95,15 @@ int main()
                     if (newfd < 0) 
                         perror("accept");
                     else
-                    {
-                        new_fd.fd = newfd;
-                        new_fd.events = POLLIN | POLLOUT;
-                        fds.push_back(new_fd);
-                    }
+                        push_fds(newfd, POLLIN | POLLOUT, fds);
                 }
                 else 
                 {
-                    int bytes_read;
-                    bytes_read = recv(fds[i].fd, storage_buff, 4096, 0);
-                    storage_buff[bytes_read] = '\0';
-                    Client Clone(storage_buff);
+                    buff = recv_request(fds[i].fd);
+                    Client Clone(buff);
                     Client_Vec.push_back(Clone);
-                    std::vector<Client>::iterator iter = Client_Vec.begin();
-                    std::cout << "nick : " << iter->get_nick() << std::endl;
-                    std::cout << "pass : " << iter->get_pass() << std::endl;
-                    std::cout << "user : " << iter->get_user() << std::endl;
-                    if (bytes_read <= 0 || !strncmp(storage_buff, "QUIT", strlen(storage_buff) - 1))
-                    {
-                        std::cout << "Client [" << fds[i].fd << "] End Connection" << std::endl;
-                        close(fds[i].fd);
-                        std::vector<struct pollfd>::iterator it = fds.begin();
-                        std::advance(it, i);
-                        fds.erase(it);
-                    }
+                    if (buff.length() <= 0)
+                        pull_fds(i, fds);
                 }
             }
         }

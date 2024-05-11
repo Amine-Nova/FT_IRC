@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/25 16:13:34 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/10 18:31:10 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/11 11:14:07 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,8 @@ class Client
         std::string User;
     public:
         Client();
-        Client(char *request);
+        Client(std::string Req);
+        Client &operator=(const Client &obj);
         void user_parse(std::string user);
         std::string get_user();
         std::string get_nick();
@@ -43,9 +44,8 @@ class Client
 Client::Client()
 {
 }
-Client::Client(char *request)
+Client::Client(std::string Req)
 {
-    std::string Req = request;
     std::string user, pass , nick, all;
     Client Ret;
     std::stringstream iss(Req);
@@ -83,6 +83,16 @@ std::string Client::get_nick()
 std::string Client::get_pass()
 {
     return(this->Pass);
+}
+Client &Client::operator=(const Client &obj)
+{
+    if(this != &obj)
+    {
+        this->Nick = obj.Nick;
+        this->Pass = obj.Pass;
+        this->User = obj.User;
+    }
+    return (*this);
 }
 Client::~Client()
 {
