@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/25 16:13:34 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/11 11:14:07 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/15 17:00:38 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@
 class Client
 {
     private:
+        int fd;
+        std::vector<std::string> Data;
         std::string Pass;
         std::string Nick;
         std::string User;
@@ -34,29 +36,53 @@ class Client
         Client();
         Client(std::string Req);
         Client &operator=(const Client &obj);
+        void set_attr(std::string Req);
         void user_parse(std::string user);
+        void set_data();
         std::string get_user();
         std::string get_nick();
         std::string get_pass();
+        int get_fd();
+        void set_fd(int fd);
+        void set_user(std::string u);
+        void set_nick(std::string n);
         ~Client();
 };
 
 Client::Client()
 {
 }
-Client::Client(std::string Req)
+
+std::string trim_all(std::string all)
+{
+    size_t lst = all.find_last_not_of('\r');
+    all.erase(lst + 1);
+    return (all);
+}
+
+void Client::set_attr(std::string Req)
 {
     std::string user, pass , nick, all;
     Client Ret;
     std::stringstream iss(Req);
+    
     while (std::getline(iss, all, '\n'))
     {
-        if (!all.compare(0, 4, "PASS"))
-            this->Pass = all.substr(5, all.length());
-        else if (!all.compare(0, 4, "NICK"))
-            this->Nick = all.substr(5, all.length());
-        else if (!all.compare(0, 4, "USER"))
-            user_parse(all);
+        all = trim_all(all);
+        Data.push_back(all);
+    }
+}
+void Client::set_data()
+{
+    std::vector<std::string>::iterator iter = Data.begin();
+    for(; iter != Data.end(); iter++)
+    {
+        if (!(*iter).compare(0, 4, "PASS"))
+            this->Pass = (*iter).substr(5, (*iter).length());
+        else if (!(*iter).compare(0, 4, "NICK"))
+            this->Nick = (*iter).substr(5, (*iter).length());
+        else if (!(*iter).compare(0, 4, "USER"))
+            user_parse((*iter));
     }
 }
 void Client::user_parse(std::string user)
@@ -66,7 +92,7 @@ void Client::user_parse(std::string user)
     int i = 0;
     while (ss >> garbage)
     {
-        if(i == 3)
+        if (i == 1)
             ret = garbage;
         i++;   
     }
@@ -84,10 +110,27 @@ std::string Client::get_pass()
 {
     return(this->Pass);
 }
+int Client::get_fd()
+{
+    return(this->fd);
+}
+void Client::set_fd(int fd)
+{
+    this->fd = fd;
+}
+void Client::set_user(std::string u)
+{
+    this->User = u;
+}
+void Client::set_nick(std::string n)
+{
+    this->Nick = n;
+}
 Client &Client::operator=(const Client &obj)
 {
     if(this != &obj)
     {
+        this->fd = obj.fd;
         this->Nick = obj.Nick;
         this->Pass = obj.Pass;
         this->User = obj.User;
