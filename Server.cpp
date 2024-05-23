@@ -6,11 +6,12 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/20 16:39:02 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/15 17:00:43 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/23 21:43:35 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include"Server.hpp"
+#include"Client.hpp"
 #include <time.h>
 
 void err_p(const char *str)
@@ -82,11 +83,20 @@ bool find_client(std::vector<Client> &Client_Vec, int fd)
     }
     return (false);
 }
+void erase_client(int fd, std::vector<Client> &Client_Vec)
+{
+    std::vector<Client>::iterator iter = Client_Vec.begin();
+    for(; iter->get_fd() != fd && iter != Client_Vec.end(); iter++);
+    if (iter != Client_Vec.end())
+    {
+        std::cout << "Client Erased [" << iter->get_fd() << "]" << std::endl;
+        Client_Vec.erase(iter);
+    }
+}
 int main(int ac, char **av)
 {
     if (ac == 3)
     {
-        // set argv port and password
         std::vector<struct pollfd> fds;
         std::vector<Client> Client_Vec;
         std::string buff;
@@ -102,7 +112,10 @@ int main(int ac, char **av)
                 if (fds[i].revents & POLLIN) 
                 {
                     if (fds[i].revents & (POLLHUP | POLLERR))
+                    {
                         close(fds[i].fd);
+                        erase_client(fds[i].fd, Client_Vec);
+                    }
                     if (fds[i].fd == server_socket) 
                     {
                         int newfd;
@@ -120,21 +133,22 @@ int main(int ac, char **av)
                             Client Clone;
                             Clone.set_attr(buff);
                             Clone.set_data();
-                            if (atoi(Clone.get_pass().c_str()) == pass)
-                            {
-                                Clone.set_fd(fds[i].fd);
-                                Client_Vec.push_back(Clone);
-                            }
-                            else
-                                std::cout << "Wrong Password" << std::endl;
+                            Clone.set_fd(fds[i].fd);
+                            Client_Vec.push_back(Clone);
                         }
                         else
                         {
                             std::vector<Client>::iterator it = Client_Vec.begin();
-                            for(; it->get_fd() != fds[i].fd; it++){}
+                            for(; it->get_fd() != fds[i].fd; it++);
                             it->set_attr(buff);
                             it->set_data();
-                            // std::cout << "[" << it->get_fd() << "] : " << it->get_nick() << " | " << it->get_user() << " | " << it->get_pass() << std::endl;
+                            if (atoi(it->get_pass().c_str()) != pass)
+                            {
+                                std::cout << "Wrong Password" << std::endl;
+                                pull_fds(i, fds);
+                                Client_Vec.erase(it);
+                            }
+                            std::cout << "[" << it->get_fd() << "] : " << it->get_nick() << " | " << it->get_user() << " | " << it->get_pass() << std::endl;
                         }
                     }
                 }

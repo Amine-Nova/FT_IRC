@@ -4,13 +4,13 @@ CC = c++
 
 CFLAGS = -Wall -Werror -Wextra -std=c++98
 
-SRCS_S = Server.cpp
+SRCS_S = Server.cpp Client.cpp
 
 OBJ_S = ${SRCS_S:.cpp=.o}
 
 all : $(SERVER)
 
-%.o : %.cpp Server.hpp
+%.o : %.cpp Server.hpp Client.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
