@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/16 08:26:10 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/16 09:21:14 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/25 10:57:26 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ void Client::set_data()
         else if (!(*iter).compare(0, 7, "PRIVMSG"))
         {
             std::cout << fd << std::endl;
-            send(fd, (*iter).c_str(), (*iter).length(), 0);
+            send(3, (*iter).c_str(), (*iter).length(), 0);
         }
             //douzi lchafi9
     }
@@ -95,6 +95,14 @@ void Client::set_nick(std::string n)
 {
     this->Nick = n;
 }
+void Client::erase_attr()
+{
+    this->Nick.clear();
+    this->Pass.clear();
+    this->User.clear();
+    this->Data.clear();
+}
+
 Client &Client::operator=(const Client &obj)
 {
     if(this != &obj)

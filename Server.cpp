@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/20 16:39:02 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/23 21:43:35 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/25 10:58:27 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,7 @@ void erase_client(int fd, std::vector<Client> &Client_Vec)
     if (iter != Client_Vec.end())
     {
         std::cout << "Client Erased [" << iter->get_fd() << "]" << std::endl;
+        iter->erase_attr();
         Client_Vec.erase(iter);
     }
 }
@@ -116,7 +117,7 @@ int main(int ac, char **av)
                         close(fds[i].fd);
                         erase_client(fds[i].fd, Client_Vec);
                     }
-                    if (fds[i].fd == server_socket) 
+                    else if (fds[i].fd == server_socket) 
                     {
                         int newfd;
                         newfd = accept_client(server_socket);
@@ -146,9 +147,11 @@ int main(int ac, char **av)
                             {
                                 std::cout << "Wrong Password" << std::endl;
                                 pull_fds(i, fds);
+                                it->erase_attr();
                                 Client_Vec.erase(it);
                             }
-                            std::cout << "[" << it->get_fd() << "] : " << it->get_nick() << " | " << it->get_user() << " | " << it->get_pass() << std::endl;
+                            if (it != Client_Vec.end())
+                                std::cout << "[" << it->get_fd() << "] : " << it->get_nick() << " | " << it->get_user() << " | " << it->get_pass() << std::endl;
                         }
                     }
                 }

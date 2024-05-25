@@ -6,7 +6,7 @@
 /*   By: abenmous <abenmous@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/16 08:26:12 by abenmous          #+#    #+#             */
-/*   Updated: 2024/05/16 09:20:27 by abenmous         ###   ########.fr       */
+/*   Updated: 2024/05/25 10:43:54 by abenmous         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ class Client
         std::string get_user();
         std::string get_nick();
         std::string get_pass();
+        void erase_attr();
         int get_fd();
         void set_fd(int fd);
         void set_user(std::string u);
